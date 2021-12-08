@@ -44,6 +44,22 @@ router.delete('/delete/:id', async (req, res) => {
   }
 })
 
+router.put('/edit/', async (req, res) => {
+  try {
+    const { id, text } = req.body
+
+    const note = await Note.findOne({ _id: id })
+
+    note.text = text
+
+    await note.save()
+
+    res.json(note)
+  } catch (error) {
+    console.log(error)
+  }
+})
+
 module.exports = router
 
 

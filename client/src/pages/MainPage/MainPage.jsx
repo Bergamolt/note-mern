@@ -1,25 +1,20 @@
 import './MainPage.scss'
-import 'react-quill/dist/quill.snow.css'
 
-import React, { useCallback, useContext, useEffect, useState, useRef } from 'react'
-
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { AuthContext } from '../../context/AuthContext'
 
 import axios from 'axios'
 
-import MyModal from '../../components/modal'
-import Cards from '../../components/Cards';
+import Cards from '../../components/Cards'
 
 export default function MainPage() {
-  const {userId} = useContext(AuthContext)
+  const { userId } = useContext(AuthContext)
 
   const [ text, setText ] = useState('')
 
+  const [ editId, setEditId ] = useState('')
+
   const [ notes, setNotes ] = useState([])
-
-  const [ content, setContent ] = useState('')
-
-  const [ modalIsOpen, setModalIsOpen ] = useState(false)
 
   const getNote = useCallback(async () => {
     try {
@@ -35,7 +30,7 @@ export default function MainPage() {
     } catch (error) {
       console.log(error)
     }
-  }, [ userId ])
+  }, [])
 
   useEffect(async () => {
     await getNote()
@@ -54,8 +49,8 @@ export default function MainPage() {
       })
         .then(res => {
           setNotes([
+            res.data,
             ...notes,
-            res.data
           ])
           setText('')
         })
@@ -77,19 +72,29 @@ export default function MainPage() {
     }
   }, [ getNote ])
 
-  const openModal = () => setModalIsOpen(!modalIsOpen)
+  const editNote = useCallback(async () => {
+    if (!text) return
 
-  const openContent = (value) => {
-    openModal()
-    setContent(value)
+    try {
+      await axios.put(`/api/note/edit/`, { id: editId, text }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+        .then((response) => {
+          setEditId('')
+          setText('')
+          getNote([ ...notes, response.data ])
+        })
+    } catch (error) {
+      console.log(error)
+    }
+  }, [ getNote, editId, text ])
+
+  const onEdit = (text, id) => {
+    setText(text)
+    setEditId(id)
   }
-
-  const closeModal = () => {
-    setModalIsOpen(false)
-    setContent('')
-  }
-
-  const test = (text) => setText(text)
 
   return (
     <div className="container">
@@ -112,15 +117,14 @@ export default function MainPage() {
           <div className="row">
             <button
               className="wawes-effect wawes-light btn"
-              onClick={ createNote }
+              onClick={ !editId ? createNote : editNote }
             ><i className="material-icons left">save</i>
-              Add Note
+              { !editId ? 'Add Note' : 'Save Note' }
             </button>
           </div>
         </form>
         <h3>My Notes</h3>
-        <Cards notes={ notes } onDelete={deleteNote} onEdit={test} />
-        <MyModal modalIsOpen={ modalIsOpen } closeModal={ closeModal } content={ content }/>
+        <Cards notes={ notes } onDelete={deleteNote} onEdit={onEdit} />
       </div>
     </div>
   )

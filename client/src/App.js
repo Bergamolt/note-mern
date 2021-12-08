@@ -5,8 +5,6 @@ import { useRoutes } from './routes'
 import { AuthContext } from './context/AuthContext'
 import { useAuth } from './hooks/auth.hook'
 
-import './App.scss'
-
 export default function App() {
   const { login, logout, token, userId, isReady } = useAuth()
   const isLogin = !!token
